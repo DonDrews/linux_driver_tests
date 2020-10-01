@@ -1,0 +1,1 @@
+cmd_/home/donovan/Documents/Code/linux_mod_test/chardev.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/donovan/Documents/Code/linux_mod_test/chardev.ko /home/donovan/Documents/Code/linux_mod_test/chardev.o /home/donovan/Documents/Code/linux_mod_test/chardev.mod.o ;  true
