@@ -1,0 +1,1 @@
+cmd_/home/pi/linux_driver_tests/total_lcd.ko := ld -r  -EL  --build-id  -T ./scripts/module-common.lds -T ./arch/arm/kernel/module.lds -o /home/pi/linux_driver_tests/total_lcd.ko /home/pi/linux_driver_tests/total_lcd.o /home/pi/linux_driver_tests/total_lcd.mod.o;  true

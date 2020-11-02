@@ -16,14 +16,10 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h> /* for put_user */
 #include <linux/device.h>
+#include <asm/io.h>
 
 #define CHARDEV_MAGIC 0x55
 #define CHARDEV_IOCTL_CLR _IO(CHARDEV_MAGIC, 0x1)
-
-//GPIO registers
-#define GPFSEL1 (*(unsigned int*) 0x20200004)
-#define GPSET0 (*(unsigned int*) 0x2020001C)
-#define GPCLR0 (*(unsigned int*) 0x20200028)
 
 /*
  * Prototypes - this would normally go in a .h file
@@ -50,6 +46,7 @@ static int Major;
 static int Device_Open = 0;
 static char msg[BUF_LEN];
 static char *msg_Ptr;
+static void __iomem *gpio_vaddr;
 
 static struct class *chardevClass = NULL;	///< The device-driver class struct pointer
 static struct device *chardevDevice = NULL; ///< The device-driver device struct pointer
@@ -87,9 +84,13 @@ static int initialize(void)
 	// Register the device driver
 	chardevDevice = device_create(chardevClass, NULL, MKDEV(Major, 0), NULL, DEVICE_NAME);
 
+	gpio_vaddr = (unsigned int*)ioremap(GPIO_BASE, 0xFF);
+
 	//setup GPIO
-	GPFSEL1 &= (7 << 18);
-	GPFSEL1 |= (1 << 18);
+	unsigned int gpfsel1_val = readl(gpio_vaddr + GPFSEL1_OFF);
+	gpfsel1_val &= (7 << 18);
+	gpfsel1_val |= (1 << 18);
+	writel(gpfsel1_val, gpio_vaddr + GPFSEL1_OFF);
 
 	return SUCCESS;
 }
@@ -106,6 +107,7 @@ void cleanup_module(void)
 	class_unregister(chardevClass);				   // unregister the device class
 	class_destroy(chardevClass);				   // remove the device class
 	unregister_chrdev(Major, DEVICE_NAME);		   // unregister the major number
+	iounmap(gpio_vaddr);
 	printk(KERN_INFO "EBBChar: Goodbye from the LKM!\n");
 }
 
@@ -192,9 +194,9 @@ static ssize_t device_read(struct file *filp, /* see include/linux/fs.h   */
 
 	//toggle gpio
 	if(gpio_state)
-		GPCLR0 |= (1 << 16);
+		writel((1 << 16), gpio_vaddr + GPCLR0_OFF);
 	else
-		GPSET0 |= (1 << 16);
+		writel((1 << 16), gpio_vaddr + GPSET0_OFF);
 
 	gpio_state = !gpio_state;
 	/*
