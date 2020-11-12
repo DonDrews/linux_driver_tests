@@ -1,1 +1,0 @@
-cmd_/home/pi/linux_driver_tests/chardev.ko := ld -r  -EL  --build-id  -T ./scripts/module-common.lds -T ./arch/arm/kernel/module.lds -o /home/pi/linux_driver_tests/chardev.ko /home/pi/linux_driver_tests/chardev.o /home/pi/linux_driver_tests/chardev.mod.o;  true

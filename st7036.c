@@ -1,10 +1,11 @@
 #include "st7036.h"
 
+
 //physical pins for interfacing with the LCD screen
-const pin_t rs = 2;
-const pin_t rw = 1;
-const pin_t en = 0;
-const pin_t data_bus[] = {1, 2, 3, 4};
+//used to have rw, but we'll just tie to GND
+const pin_t rs = 24;
+const pin_t en = 23;
+const pin_t data_bus[] = {17, 27, 22, 5};
 
 //GPIO registers on RPi 2b
 #define GPIO_BASE 0x3F200000
@@ -35,9 +36,9 @@ int st7036_Init(void)
 	int i;
 	gpio_base_vaddr = ioremap(GPIO_BASE, GPIO_REG_SIZE);
 
+	printk(KERN_INFO "LCD CHARDEV: Mapped GPIO_BASE to vmem location: %x\n", (unsigned int)gpio_base_vaddr);
 	//Set pins as output
 	gpio_function_set(rs);
-	gpio_function_set(rw);
 	gpio_function_set(en);
 
 	for(i = 0; i < 4; i++)
@@ -50,7 +51,8 @@ int st7036_Init(void)
 
 int st7036_Cleanup(void)
 {
-	iounmap((void*)GPIO_BASE);
+	printk(KERN_INFO "LCD CHARDEV: Free GPIO_BASE vmem location: %x\n", (unsigned int)gpio_base_vaddr);
+	iounmap((void*)gpio_base_vaddr);
 	return 0;
 }
 
@@ -80,10 +82,10 @@ void st7036_SecondLine(void)
 
 int st7036_DataWrite(unsigned int data)
 {
+	printk(KERN_INFO "Writing %c", (char)data);
 	unsigned int hinibble, lownibble;
 
 	gpio_set(rs);
-	gpio_clear(rw);
 
 	hinibble = data >> 4;
 	lownibble = data & 0xf;
@@ -104,7 +106,6 @@ int st7036_DataWrite(unsigned int data)
 static void startup_sequence()
 {
 	/* Initialize display */
-	gpio_clear(rw);
 
 	//initialization command 3 times
 	commandWrite(0x3);
@@ -143,7 +144,6 @@ static void startup_sequence()
 static void commandWrite(int cmd)
 {
 	gpio_clear(rs);
-	gpio_clear(rw);
 
 	bus_update(data_bus, cmd);
 
@@ -164,14 +164,20 @@ static void pulse_enable(void)
 
 static void gpio_set(pin_t io)
 {
+	#ifndef VIRTUAL
 	void __iomem* reg_addr = gpio_base_vaddr + GPSET0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
+	#endif
+	printk(KERN_INFO "Set register %x with offset %x", GPSET0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 static void gpio_clear(pin_t io)
 {
+	#ifndef VIRTUAL
 	void __iomem* reg_addr = gpio_base_vaddr + GPCLR0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
+	#endif
+	printk(KERN_INFO "Clear register %x with offset %x", GPCLR0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 //put nibble onto the pins in the data bus
@@ -202,10 +208,13 @@ static void gpio_function_set(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPFSEL0_OFF + (reg_num << 2);
 	offset = (io % 10) * 3;
 
+	printk(KERN_INFO "Set select register %x with offset %x", GPFSEL0_OFF + (reg_num << 2), offset);
+	#ifndef VIRTUAL
 	gpfsel_val = readl(reg_addr);
 	gpfsel_val &= ~(0x7 << offset);
 	gpfsel_val |= (0x1 << offset);
 	writel(gpfsel_val, reg_addr);
+	#endif
 }
 
 MODULE_LICENSE("GPL");
