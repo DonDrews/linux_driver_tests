@@ -69,7 +69,6 @@ static void cleanup(void)
 	st7036_Cleanup();
 	device_destroy(chardevClass, MKDEV(Major, 0)); // remove the device
 	class_unregister(chardevClass);				   // unregister the device class
-	class_destroy(chardevClass);				   // remove the device class
 	unregister_chrdev(Major, DEVICE_NAME);		   // unregister the major number
 	printk(KERN_INFO "Goodbye!\n");
 }
@@ -112,6 +111,7 @@ static ssize_t lcd_write(struct file *filp, const char *buffer, size_t length, l
 	char from_user;
 	int i;
 	printk(KERN_INFO "LCD CHARDEV: write\n");
+	st7036_Home();
 	//pull up to 32 characters from the file
 	//ignore last character in buffer (null termination of string)
 	for(i = 0; i < 32 && i < length - 1; i++)

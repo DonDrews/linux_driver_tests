@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo "test" > /dev/LCDchardev
+echo "another example lineeee" > /dev/LCDchardev

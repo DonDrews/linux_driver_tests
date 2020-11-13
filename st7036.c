@@ -109,7 +109,7 @@ static void startup_sequence()
 
 	//initialization command 3 times
 	commandWrite(0x3);
-	usleep_range(1000, 4000);
+	usleep_range(5000, 16000);
 	commandWrite(0x3);
 	usleep_range(1000, 4000);
 	commandWrite(0x3);
@@ -153,13 +153,13 @@ static void commandWrite(int cmd)
 static void pulse_enable(void)
 {
 	gpio_clear(en);
-	usleep_range(50, 200);
+	usleep_range(200, 500);
 
 	gpio_set(en);
-	usleep_range(50, 200);
+	usleep_range(200, 500);
 
 	gpio_clear(en);
-	usleep_range(50, 200);
+	usleep_range(200, 500);
 }
 
 static void gpio_set(pin_t io)
@@ -168,7 +168,7 @@ static void gpio_set(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPSET0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
 	#endif
-	printk(KERN_INFO "Set register %x with offset %x", GPSET0_OFF + ((io / 32) << 2), (io % 32));
+	printk(KERN_INFO "Set register %x with offset %d", GPSET0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 static void gpio_clear(pin_t io)
@@ -177,7 +177,7 @@ static void gpio_clear(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPCLR0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
 	#endif
-	printk(KERN_INFO "Clear register %x with offset %x", GPCLR0_OFF + ((io / 32) << 2), (io % 32));
+	printk(KERN_INFO "Clear register %x with offset %d", GPCLR0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 //put nibble onto the pins in the data bus

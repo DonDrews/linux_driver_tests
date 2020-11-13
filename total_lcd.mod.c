@@ -38,7 +38,6 @@ __used __section(__versions) = {
 	{ 0x581513d4, "module_put" },
 	{ 0x12a38747, "usleep_range" },
 	{ 0xedc03953, "iounmap" },
-	{ 0xdb5ba406, "class_destroy" },
 	{ 0xa80a1f07, "__class_create" },
 	{ 0x9c7104ab, "try_module_get" },
 };
@@ -46,4 +45,4 @@ __used __section(__versions) = {
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "007CE5167F9D5B9207C4732");
+MODULE_INFO(srcversion, "A421344FFC66041324446B7");
