@@ -33,6 +33,7 @@ static void startup_sequence(void);
 
 int st7036_Init(void)
 {
+	//map registers to vmem
 	int i;
 	gpio_base_vaddr = ioremap(GPIO_BASE, GPIO_REG_SIZE);
 
@@ -82,11 +83,11 @@ void st7036_SecondLine(void)
 
 int st7036_DataWrite(unsigned int data)
 {
-	printk(KERN_INFO "Writing %c", (char)data);
 	unsigned int hinibble, lownibble;
 
 	gpio_set(rs);
 
+	//bus is only 4 wires, send command in two nibbles
 	hinibble = data >> 4;
 	lownibble = data & 0xf;
 
@@ -141,6 +142,8 @@ static void startup_sequence()
 	usleep_range(1000, 4000);
 }
 
+
+//write a command to the screen (non-character data)
 static void commandWrite(int cmd)
 {
 	gpio_clear(rs);
@@ -150,6 +153,7 @@ static void commandWrite(int cmd)
 	pulse_enable();
 }
 
+//quickly pulse the enable line to latch in data on bus
 static void pulse_enable(void)
 {
 	gpio_clear(en);
@@ -168,7 +172,6 @@ static void gpio_set(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPSET0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
 	#endif
-	printk(KERN_INFO "Set register %x with offset %d", GPSET0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 static void gpio_clear(pin_t io)
@@ -177,7 +180,6 @@ static void gpio_clear(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPCLR0_OFF + ((io / 32) << 2);
 	writel(0x1 << (io % 32), reg_addr);
 	#endif
-	printk(KERN_INFO "Clear register %x with offset %d", GPCLR0_OFF + ((io / 32) << 2), (io % 32));
 }
 
 //put nibble onto the pins in the data bus
@@ -208,7 +210,6 @@ static void gpio_function_set(pin_t io)
 	void __iomem* reg_addr = gpio_base_vaddr + GPFSEL0_OFF + (reg_num << 2);
 	offset = (io % 10) * 3;
 
-	printk(KERN_INFO "Set select register %x with offset %x", GPFSEL0_OFF + (reg_num << 2), offset);
 	#ifndef VIRTUAL
 	gpfsel_val = readl(reg_addr);
 	gpfsel_val &= ~(0x7 << offset);

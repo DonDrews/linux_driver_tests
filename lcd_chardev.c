@@ -1,3 +1,4 @@
+//kernel includes
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
@@ -7,9 +8,7 @@
 //local includes
 #include "st7036.h"
 
-/**
- * Prototypes for file operations on our device
- */
+//Prototypes for file operations on character device
 static int lcd_open(struct inode *, struct file *);
 static int lcd_release(struct inode *, struct file *);
 static ssize_t lcd_read(struct file *, char *buffer, size_t length, loff_t *off);
@@ -33,7 +32,6 @@ static struct class* chardevClass = NULL;
 static struct device* chardevDevice = NULL;
 
 const char* filler_text = "You're reading!\n";
-
 static int filler_index = 0;
 
 //called when the module is loaded
@@ -44,11 +42,11 @@ static int initialize(void)
 
 	if (Major < 0)
 	{
-		printk(KERN_ALERT "Registering char device failed with %d\n", Major);
+		printk(KERN_ALERT "LCD CHARDEV: Registering char device failed with %d\n", Major);
 		return Major;
 	}
 
-	printk(KERN_INFO "LCDchardev assigned major num %d.\n", Major);
+	printk(KERN_INFO "LCD CHARDEV: assigned major num %d.\n", Major);
 
 	// Register the device class for sysfs
 	chardevClass = class_create(THIS_MODULE, CLASS_NAME);
@@ -70,7 +68,7 @@ static void cleanup(void)
 	device_destroy(chardevClass, MKDEV(Major, 0)); // remove the device
 	class_unregister(chardevClass);				   // unregister the device class
 	unregister_chrdev(Major, DEVICE_NAME);		   // unregister the major number
-	printk(KERN_INFO "Goodbye!\n");
+	printk(KERN_INFO "LCD CHARDEV: Goodbye!\n");
 }
 
 static int lcd_open(struct inode *ino, struct file *filp)
@@ -110,7 +108,8 @@ static ssize_t lcd_write(struct file *filp, const char *buffer, size_t length, l
 {
 	char from_user;
 	int i;
-	printk(KERN_INFO "LCD CHARDEV: write\n");
+	printk(KERN_INFO "LCD CHARDEV: writing- %s", buffer);
+	st7036_Clear();
 	st7036_Home();
 	//pull up to 32 characters from the file
 	//ignore last character in buffer (null termination of string)
